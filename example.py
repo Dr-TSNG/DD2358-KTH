@@ -1,5 +1,8 @@
+from time import time
 import matplotlib.pyplot as plt
 from solver.native import native_solver
+#from solver.cy import cython_solver
+from solver.gpu import torch_solver
 
 """
 Simulate the Navier-Stokes equations (incompressible viscous fluid) 
@@ -17,10 +20,16 @@ def main():
     dt = 0.001  # timestep
     tOut = 0.01  # draw frequency
     nu = 0.001  # viscosity
+    print("Start calculation")
+    start = time()
+    #wzs = native_solver(N, t, tEnd, dt, nu)
+    #wzs = cython_solver(N, t, tEnd, dt, nu)
+    wzs = torch_solver(N, t, tEnd, dt, nu)
+    duration = time() - start
+    print(f"Calculation took {duration:.2f} seconds")
 
-    wzs = native_solver(N, t, tEnd, dt, tOut, nu)
 
-    for i in range(1, len(wzs) * tOut):
+    for i in range(1, int(len(wzs) * tOut)):
         # clac the actual index
         index = int(i / tOut)
         plt.cla()
@@ -31,7 +40,10 @@ def main():
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         ax.set_aspect("equal")
-        plt.pause(0.001)
+        plt.pause(0.1)
 
     plt.savefig("navier-stokes-spectral.png", dpi=240)
     plt.show()
+
+if __name__ == "__main__":
+    main()

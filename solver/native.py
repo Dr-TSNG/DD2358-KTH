@@ -6,21 +6,21 @@ Original code by Philip Mocz (2023), @PMocz
 https://github.com/pmocz/navier-stokes-spectral-python
 """
 
-def poisson_solve(rho, kSq_inv):
+def __poisson_solve(rho, kSq_inv):
     """solve the Poisson equation, given source field rho"""
     V_hat = -(np.fft.fftn(rho)) * kSq_inv
     V = np.real(np.fft.ifftn(V_hat))
     return V
 
 
-def diffusion_solve(v, dt, nu, kSq):
+def __diffusion_solve(v, dt, nu, kSq):
     """solve the diffusion equation over a timestep dt, given viscosity nu"""
     v_hat = (np.fft.fftn(v)) / (1.0 + dt * nu * kSq)
     v = np.real(np.fft.ifftn(v_hat))
     return v
 
 
-def grad(v, kx, ky):
+def __grad(v, kx, ky):
     """return gradient of v"""
     v_hat = np.fft.fftn(v)
     dvx = np.real(np.fft.ifftn(1j * kx * v_hat))
@@ -28,27 +28,63 @@ def grad(v, kx, ky):
     return dvx, dvy
 
 
-def div(vx, vy, kx, ky):
+def __div(vx, vy, kx, ky):
     """return divergence of (vx,vy)"""
     dvx_x = np.real(np.fft.ifftn(1j * kx * np.fft.fftn(vx)))
     dvy_y = np.real(np.fft.ifftn(1j * ky * np.fft.fftn(vy)))
     return dvx_x + dvy_y
 
 
-def curl(vx, vy, kx, ky):
+def __curl(vx, vy, kx, ky):
     """return curl of (vx,vy)"""
     dvx_y = np.real(np.fft.ifftn(1j * ky * np.fft.fftn(vx)))
     dvy_x = np.real(np.fft.ifftn(1j * kx * np.fft.fftn(vy)))
     return dvy_x - dvx_y
 
 
-def apply_dealias(f, dealias):
+def __apply_dealias(f, dealias):
     """apply 2/3 rule dealias to field f"""
     f_hat = dealias * np.fft.fftn(f)
     return np.real(np.fft.ifftn(f_hat))
 
+def __native_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu):
+    wz_series = []
 
-def native_solver(N, t, tEnd, dt, tOut, nu):
+    for i in range(Nt):
+        dvx_x, dvx_y = __grad(vx, kx, ky)
+        dvy_x, dvy_y = __grad(vy, kx, ky)
+
+        rhs_x = -(vx * dvx_x + vy * dvx_y)
+        rhs_y = -(vx * dvy_x + vy * dvy_y)
+
+        rhs_x = __apply_dealias(rhs_x, dealias)
+        rhs_y = __apply_dealias(rhs_y, dealias)
+
+        vx += dt * rhs_x
+        vy += dt * rhs_y
+
+        # Poisson solve for pressure
+        div_rhs = __div(rhs_x, rhs_y, kx, ky)
+        P = __poisson_solve(div_rhs, kSq_inv)
+        dPx, dPy = __grad(P, kx, ky)
+
+        # Correction (to eliminate divergence component of velocity)
+        vx += -dt * dPx
+        vy += -dt * dPy
+
+        # Diffusion solve (implicit)
+        vx = __diffusion_solve(vx, dt, nu, kSq)
+        vy = __diffusion_solve(vy, dt, nu, kSq)
+
+        # vorticity (for plotting)
+        wz_series.append(__curl(vx, vy, kx, ky))
+        t += dt
+
+    return wz_series
+
+
+
+def native_solver(N, t, tEnd, dt, nu):
 
     # N         = 400     # Spatial resolution
     # t         = 0       # current time of the simulation
@@ -74,7 +110,8 @@ def native_solver(N, t, tEnd, dt, tOut, nu):
     kx = np.fft.ifftshift(kx)
     ky = np.fft.ifftshift(ky)
     kSq = kx**2 + ky**2
-    kSq_inv = 1.0 / kSq
+    with np.errstate(divide='ignore'):
+        kSq_inv = np.divide(1.0, kSq)
     kSq_inv[kSq==0] = 1
 
 	# dealias with the 2/3 rule
@@ -82,36 +119,4 @@ def native_solver(N, t, tEnd, dt, tOut, nu):
 
     # number of timesteps
     Nt = int(np.ceil(tEnd/dt))
-    wz_series = []
-
-    for i in range(Nt):
-        dvx_x, dvx_y = grad(vx, kx, ky)
-        dvy_x, dvy_y = grad(vy, kx, ky)
-
-        rhs_x = -(vx * dvx_x + vy * dvx_y)
-        rhs_y = -(vx * dvy_x + vy * dvy_y)
-
-        rhs_x = apply_dealias(rhs_x, dealias)
-        rhs_y = apply_dealias(rhs_y, dealias)
-
-        vx += dt * rhs_x
-        vy += dt * rhs_y
-
-        # Poisson solve for pressure
-        div_rhs = div(rhs_x, rhs_y, kx, ky)
-        P = poisson_solve(div_rhs, kSq_inv)
-        dPx, dPy = grad(P, kx, ky)
-
-        # Correction (to eliminate divergence component of velocity)
-        vx += -dt * dPx
-        vy += -dt * dPy
-
-        # Diffusion solve (implicit)
-        vx = diffusion_solve(vx, dt, nu, kSq)
-        vy = diffusion_solve(vy, dt, nu, kSq)
-
-        # vorticity (for plotting)
-        wz_series.append(curl(vx, vy, kx, ky))
-        t += dt
-
-    return wz_series
+    return __native_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu)
