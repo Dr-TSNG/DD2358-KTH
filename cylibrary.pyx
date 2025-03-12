@@ -35,9 +35,9 @@ def grad(cnp.ndarray[cnp.double_t, ndim=2] v,
          cnp.ndarray[cnp.double_t, ndim=2] kx,
          cnp.ndarray[cnp.double_t, ndim=2] ky):
     cdef cnp.ndarray[cnp.complex128_t, ndim=2] v_hat = fftn(v)
-    cdef cnp.ndarray[cnp.complex128_t, ndim=2] term_x = 1j * kx * v_hat
-    cdef cnp.ndarray[cnp.complex128_t, ndim=2] term_y = 1j * ky * v_hat
-    return np.real(ifftn(term_x)), np.real(ifftn(term_y))
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] dvx = np.real(ifftn(1j * kx * v_hat))
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] dvy = np.real(ifftn(1j * ky * v_hat))
+    return dvx, dvy
 
 
 @cython.boundscheck(False)
@@ -48,9 +48,9 @@ def div(cnp.ndarray[cnp.double_t, ndim=2] vx,
         cnp.ndarray[cnp.double_t, ndim=2] ky):
     cdef cnp.ndarray[cnp.complex128_t, ndim=2] vx_hat = fftn(vx)
     cdef cnp.ndarray[cnp.complex128_t, ndim=2] vy_hat = fftn(vy)
-    cdef cnp.ndarray[cnp.complex128_t, ndim=2] term_x = 1j * kx * vx_hat
-    cdef cnp.ndarray[cnp.complex128_t, ndim=2] term_y = 1j * ky * vy_hat
-    return np.real(ifftn(term_x + term_y))
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] dvx_x = np.real(ifftn(1j * kx * vx_hat))
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] dvy_y = np.real(ifftn(1j * ky * vy_hat))
+    return dvx_x + dvy_y
 
 
 @cython.boundscheck(False)
@@ -61,15 +61,14 @@ def curl(cnp.ndarray[cnp.double_t, ndim=2] vx,
          cnp.ndarray[cnp.double_t, ndim=2] ky):
     cdef cnp.ndarray[cnp.complex128_t, ndim=2] vx_hat = fftn(vx)
     cdef cnp.ndarray[cnp.complex128_t, ndim=2] vy_hat = fftn(vy)
-    cdef cnp.ndarray[cnp.complex128_t, ndim=2] term_x = 1j * ky * vx_hat
-    cdef cnp.ndarray[cnp.complex128_t, ndim=2] term_y = -1j * kx * vy_hat
-    return np.real(ifftn(term_x - term_y))
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] dvx_y = np.real(ifftn(1j * ky * vx_hat))
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] dvy_x = np.real(ifftn(1j * kx * vy_hat))
+    return dvy_x - dvx_y
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def apply_dealias(cnp.ndarray[cnp.double_t, ndim=2] f,
                  cnp.ndarray[cnp.uint8_t, ndim=2] dealias):
-    cdef cnp.ndarray[cnp.complex128_t, ndim=2] f_hat = fftn(f)
-    f_hat *= dealias
+    cdef cnp.ndarray[cnp.complex128_t, ndim=2] f_hat = dealias * fftn(f)
     return np.real(ifftn(f_hat))
