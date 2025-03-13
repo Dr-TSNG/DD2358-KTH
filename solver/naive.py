@@ -1,7 +1,7 @@
 import numpy as np
 
 """
-Native Python Solver for Navier-Stokes Spectral Method Simulation
+Naive Python Solver for Navier-Stokes Spectral Method Simulation
 Original code by Philip Mocz (2023), @PMocz
 https://github.com/pmocz/navier-stokes-spectral-python
 """
@@ -47,7 +47,7 @@ def __apply_dealias(f, dealias):
     f_hat = dealias * np.fft.fftn(f)
     return np.real(np.fft.ifftn(f_hat))
 
-def __native_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu):
+def __iter_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu):
     wz_series = []
 
     for i in range(Nt):
@@ -84,7 +84,7 @@ def __native_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu):
 
 
 
-def native_solver(N, t, tEnd, dt, nu):
+def naive_solver(N, t, tEnd, dt, nu):
 
     # N         = 400     # Spatial resolution
     # t         = 0       # current time of the simulation
@@ -119,4 +119,4 @@ def native_solver(N, t, tEnd, dt, nu):
 
     # number of timesteps
     Nt = int(np.ceil(tEnd/dt))
-    return __native_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu)
+    return __iter_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu)

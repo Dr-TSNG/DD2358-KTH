@@ -47,7 +47,7 @@ def __apply_dealias(f, dealias):
     return torch.real(torch.fft.ifftn(f_hat))
 
 
-def __native_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu):
+def __iter_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu):
     wz_series = []
 
     for i in range(Nt):
@@ -113,4 +113,4 @@ def torch_solver(N, t, tEnd, dt, nu, device="cuda"):
     # Number of timesteps
     Nt = int(torch.ceil(torch.tensor(tEnd / dt)))
 
-    return __native_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu)
+    return __iter_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu)

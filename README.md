@@ -9,7 +9,7 @@ This repository contains the final project for the course DD2358 High Performanc
 ├── solver              # The solver
 │   ├── cy.pyx          # Cython implementation of the solver
 │   ├── gpu.py          # GPU implementation of the solver
-│   └── native.py       # Native Python implementation of the solver(baseline)
+│   └── naive.py       # naive Python implementation of the solver(baseline)
 │   └── __init__.py
 ├── example.py          # Example usage of the solver
 ├── setup.py

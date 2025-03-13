@@ -76,7 +76,7 @@ cdef inline cnp.ndarray __apply_dealias(cnp.ndarray[cnp.double_t, ndim=2] f,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef inline list __native_loop(cnp.ndarray[cnp.double_t, ndim=2] vx, cnp.ndarray[double, ndim=2] vy, 
+cdef inline list __iter_loop(cnp.ndarray[cnp.double_t, ndim=2] vx, cnp.ndarray[double, ndim=2] vy, 
                         cnp.ndarray[cnp.double_t, ndim=2] kx, cnp.ndarray[double, ndim=2] ky, 
                         cnp.ndarray[cnp.double_t, ndim=2] kSq, cnp.ndarray[double, ndim=2] kSq_inv, 
                         cnp.ndarray[cnp.uint8_t, ndim=2] dealias, double t, int Nt, double dt, double nu):
@@ -144,4 +144,4 @@ def cython_solver(int N, double t, double tEnd, double dt, double nu):
     
     # Number of timesteps
     Nt = int(np.ceil(tEnd / dt))
-    return __native_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu)
+    return __iter_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu)

@@ -1,7 +1,7 @@
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-from solver.native import native_solver
+from solver.naive import naive_solver
 from solver.cy import cython_solver
 from solver.torch import torch_solver
 
@@ -37,19 +37,19 @@ def main():
     scales = [100, 200, 300, 400, 500]
     runs = 3
 
-    results_native = test_solver_performance(native_solver, scales, runs)
+    results_naive = test_solver_performance(naive_solver, scales, runs)
     results_cython = test_solver_performance(cython_solver, scales, runs)
     results_torch = test_solver_performance(torch_solver, scales, runs, device="cuda")
 
     # save results data
-    np.save("results_native.npy", results_native)
+    np.save("results_naive.npy", results_naive)
     np.save("results_cython.npy", results_cython)
     np.save("results_torch.npy", results_torch)
 
     plt.figure()
     # use log scale for y-axis
     plt.yscale("symlog")
-    plt.errorbar(results_native[:, 0], results_native[:, 1], yerr=results_native[:, 2], label="native")
+    plt.errorbar(results_naive[:, 0], results_naive[:, 1], yerr=results_naive[:, 2], label="naive")
     plt.errorbar(results_cython[:, 0], results_cython[:, 1], yerr=results_cython[:, 2], label="cython")
     plt.errorbar(results_torch[:, 0], results_torch[:, 1], yerr=results_torch[:, 2], label="torch")
 
