@@ -3,6 +3,7 @@ build
 *.so
 *.prof
 *.png
+*.npy
 .venv
 *__pycache__*
 result/*

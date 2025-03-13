@@ -5,15 +5,14 @@ Cython Solver for Navier-Stokes Spectral Method Simulation
 import numpy as np
 cimport numpy as cnp
 cimport cython
-import pyfftw
-from pyfftw.interfaces.numpy_fft import fftn, ifftn, ifftshift
+from scipy.fftpack import fftn, ifftn, ifftshift
 
 
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def __poisson_solve(cnp.ndarray[cnp.double_t, ndim=2] rho,
+cdef inline cnp.ndarray __poisson_solve(cnp.ndarray[cnp.double_t, ndim=2] rho,
                  cnp.ndarray[cnp.double_t, ndim=2] kSq_inv):
     cdef cnp.ndarray[cnp.complex128_t, ndim=2] rho_hat = fftn(rho)
     cdef cnp.ndarray[cnp.complex128_t, ndim=2] V_hat = -rho_hat * kSq_inv
@@ -22,7 +21,7 @@ def __poisson_solve(cnp.ndarray[cnp.double_t, ndim=2] rho,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def __diffusion_solve(cnp.ndarray[cnp.double_t, ndim=2] v,
+cdef inline cnp.ndarray __diffusion_solve(cnp.ndarray[cnp.double_t, ndim=2] v,
                    cnp.float64_t dt,
                    cnp.float64_t nu,
                    cnp.ndarray[cnp.double_t, ndim=2] kSq):
@@ -33,7 +32,7 @@ def __diffusion_solve(cnp.ndarray[cnp.double_t, ndim=2] v,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def __grad(cnp.ndarray[cnp.double_t, ndim=2] v,
+cdef inline tuple[cnp.ndarray, cnp.ndarray] __grad(cnp.ndarray[cnp.double_t, ndim=2] v,
          cnp.ndarray[cnp.double_t, ndim=2] kx,
          cnp.ndarray[cnp.double_t, ndim=2] ky):
     cdef cnp.ndarray[cnp.complex128_t, ndim=2] v_hat = fftn(v)
@@ -44,7 +43,7 @@ def __grad(cnp.ndarray[cnp.double_t, ndim=2] v,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def __div(cnp.ndarray[cnp.double_t, ndim=2] vx,
+cdef inline cnp.ndarray __div(cnp.ndarray[cnp.double_t, ndim=2] vx,
         cnp.ndarray[cnp.double_t, ndim=2] vy,
         cnp.ndarray[cnp.double_t, ndim=2] kx,
         cnp.ndarray[cnp.double_t, ndim=2] ky):
@@ -57,7 +56,7 @@ def __div(cnp.ndarray[cnp.double_t, ndim=2] vx,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def __curl(cnp.ndarray[cnp.double_t, ndim=2] vx,
+cdef inline cnp.ndarray __curl(cnp.ndarray[cnp.double_t, ndim=2] vx,
          cnp.ndarray[cnp.double_t, ndim=2] vy,
          cnp.ndarray[cnp.double_t, ndim=2] kx,
          cnp.ndarray[cnp.double_t, ndim=2] ky):
@@ -70,14 +69,14 @@ def __curl(cnp.ndarray[cnp.double_t, ndim=2] vx,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def __apply_dealias(cnp.ndarray[cnp.double_t, ndim=2] f,
+cdef inline cnp.ndarray __apply_dealias(cnp.ndarray[cnp.double_t, ndim=2] f,
                  cnp.ndarray[cnp.uint8_t, ndim=2] dealias):
     cdef cnp.ndarray[cnp.complex128_t, ndim=2] f_hat = dealias * fftn(f)
     return np.real(ifftn(f_hat))
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef list __native_loop(cnp.ndarray[cnp.double_t, ndim=2] vx, cnp.ndarray[double, ndim=2] vy, 
+cdef inline list __native_loop(cnp.ndarray[cnp.double_t, ndim=2] vx, cnp.ndarray[double, ndim=2] vy, 
                         cnp.ndarray[cnp.double_t, ndim=2] kx, cnp.ndarray[double, ndim=2] ky, 
                         cnp.ndarray[cnp.double_t, ndim=2] kSq, cnp.ndarray[double, ndim=2] kSq_inv, 
                         cnp.ndarray[cnp.uint8_t, ndim=2] dealias, double t, int Nt, double dt, double nu):
@@ -116,14 +115,10 @@ cdef list __native_loop(cnp.ndarray[cnp.double_t, ndim=2] vx, cnp.ndarray[double
 
     return wz_series
 
-def cython_solver(int N, double t, double tEnd, double dt, double nu, int n_threads=4):
+def cython_solver(int N, double t, double tEnd, double dt, double nu):
     """
     Python wrapper function for the solver.
     """
-    # Enable FFTW optimizations
-    pyfftw.interfaces.cache.enable()
-    # Set number of threads, use nproc
-    pyfftw.config.NUM_THREADS = n_threads
     L = 1
     xlin = np.linspace(0, L, num=N+1)  
     xlin = xlin[0:N]  # Chop off periodic point

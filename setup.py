@@ -13,5 +13,5 @@ extensions = [
 setup(
     ext_modules=cythonize(extensions),
     include_dirs=[np.get_include()],
-    install_requires=['numpy', 'pyfftw'],
+    install_requires=['numpy', 'scipy'],
 )
