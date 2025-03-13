@@ -89,7 +89,7 @@ def torch_solver(N, t, tEnd, dt, nu, device="cuda"):
 
     # Domain [0,1] x [0,1]
     L = 1
-    xlin = torch.linspace(0, L, steps=N+1, device=device)
+    xlin = torch.linspace(0, L, steps=N+1, device=device, dtype=torch.float64)
     xlin = xlin[:N]  # chop off the periodic point
     xx, yy = torch.meshgrid(xlin, xlin, indexing='xy')
 

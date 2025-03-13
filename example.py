@@ -1,8 +1,8 @@
 from time import time
 import matplotlib.pyplot as plt
 from solver.native import native_solver
-#from solver.cy import cython_solver
-from solver.gpu import torch_solver
+from solver.cy import cython_solver
+from solver.torch import torch_solver
 
 """
 Simulate the Navier-Stokes equations (incompressible viscous fluid) 
@@ -23,8 +23,8 @@ def main():
     print("Start calculation")
     start = time()
     #wzs = native_solver(N, t, tEnd, dt, nu)
-    #wzs = cython_solver(N, t, tEnd, dt, nu)
-    wzs = torch_solver(N, t, tEnd, dt, nu)
+    #wzs = cython_solver(N, t, tEnd, dt, nu, n_threads=4)
+    wzs = torch_solver(N, t, tEnd, dt, nu,device="cuda")
     duration = time() - start
     print(f"Calculation took {duration:.2f} seconds")
 

@@ -8,9 +8,7 @@ cimport cython
 import pyfftw
 from pyfftw.interfaces.numpy_fft import fftn, ifftn, ifftshift
 
-# Enable FFTW optimizations
-pyfftw.interfaces.cache.enable()
-pyfftw.config.NUM_THREADS = 8
+
 
 
 @cython.boundscheck(False)
@@ -118,10 +116,14 @@ cdef list __native_loop(cnp.ndarray[cnp.double_t, ndim=2] vx, cnp.ndarray[double
 
     return wz_series
 
-def cython_solver(int N, double t, double tEnd, double dt, double nu):
+def cython_solver(int N, double t, double tEnd, double dt, double nu, int n_threads=4):
     """
     Python wrapper function for the solver.
     """
+    # Enable FFTW optimizations
+    pyfftw.interfaces.cache.enable()
+    # Set number of threads, use nproc
+    pyfftw.config.NUM_THREADS = n_threads
     L = 1
     xlin = np.linspace(0, L, num=N+1)  
     xlin = xlin[0:N]  # Chop off periodic point
