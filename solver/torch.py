@@ -2,6 +2,7 @@
 Pytorch Solver for Navier-Stokes Spectral Method Simulation
 """
 
+import math
 import torch
 import torch.fft
 
@@ -48,7 +49,7 @@ def __apply_dealias(f, dealias):
 
 
 def __iter_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu):
-    wz_series = []
+    wz_series = torch.empty((Nt, vx.shape[0], vx.shape[1]), device=vx.device, dtype=vx.dtype)
 
     for i in range(Nt):
         dvx_x, dvx_y = __grad(vx, kx, ky)
@@ -77,11 +78,11 @@ def __iter_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu):
         vy = __diffusion_solve(vy, dt, nu, kSq)
 
         # Vorticity (for plotting)
-        wz_series.append(__curl(vx, vy, kx, ky))
+        wz_series[i] = __curl(vx, vy, kx, ky)
 
         t += dt
 
-    return torch.stack(wz_series).cpu().numpy()
+    return wz_series
 
 
 def torch_solver(N, t, tEnd, dt, nu, device="cuda"):
@@ -111,6 +112,6 @@ def torch_solver(N, t, tEnd, dt, nu, device="cuda"):
     dealias = ((torch.abs(kx) < (2.0 / 3.0) * kmax) & (torch.abs(ky) < (2.0 / 3.0) * kmax)).to(device)
 
     # Number of timesteps
-    Nt = int(torch.ceil(torch.tensor(tEnd / dt)))
+    Nt = int(math.ceil(tEnd / dt))
 
-    return __iter_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu)
+    return __iter_loop(vx, vy, kx, ky, kSq, kSq_inv, dealias, t, Nt, dt, nu).cpu()
