@@ -17,7 +17,8 @@ def main():
     plt.ylabel("Average runtime (s)")
     plt.legend()
     plt.grid()
-    plt.savefig("benchmark.png", dpi=240)
+    plt.title("Solver Performance Comparison: Naive vs Cython vs Torch")
+    plt.savefig("result.png", dpi=300)
     plt.show()
 
 if __name__ == "__main__":

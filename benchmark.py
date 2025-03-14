@@ -32,19 +32,17 @@ def test_solver_performance(solver, scales, runs, warmup=False,**kwargs):
     return np.array(results)
 
 def main():
-    #scales = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-    #runs = 10
-    scales = [100, 200, 300, 400, 500]
-    runs = 3
+    scales = [100, 200, 300, 400, 500, 600, 700, 800]
+    runs = 10
+
+    results_torch = test_solver_performance(torch_solver, scales, runs, warmup=True, device="cuda")
+    np.save("results_torch.npy", results_torch)
+    
+    results_cython = test_solver_performance(cython_solver, scales, runs)
+    np.save("results_cython.npy", results_cython)
 
     results_naive = test_solver_performance(naive_solver, scales, runs)
-    results_cython = test_solver_performance(cython_solver, scales, runs)
-    results_torch = test_solver_performance(torch_solver, scales, runs, device="cuda")
-
-    # save results data
     np.save("results_naive.npy", results_naive)
-    np.save("results_cython.npy", results_cython)
-    np.save("results_torch.npy", results_torch)
 
     plt.figure()
     # use log scale for y-axis
