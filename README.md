@@ -12,7 +12,7 @@ This repository contains the final project for the course DD2358 High Performanc
 │   └── naive.py       # naive Python implementation of the solver(baseline)
 │   └── __init__.py
 ├── example.py          # Example usage of the solver
-├── setup.py
+├── setup.py            # Setup file for building the Cython module
 ├── img                 # Images used in the report
 ├── oldcode             # Old code that was used for profiling
 └── report.typ          # report source file
@@ -24,7 +24,7 @@ This project aims at improving the performance of [Spectral Solver for Navier-St
 
 ## Usage
 
-This project requires NumPy, Matplotlib, PyFFTW, PyTorch, and Cython.
+This project requires NumPy, Matplotlib, SciPy, PyTorch, and Cython.
 
 To build the Cython module, run:
 
